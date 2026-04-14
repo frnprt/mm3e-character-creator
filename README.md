@@ -2,6 +2,8 @@
 
 A web-based character creator for **Mutants & Masterminds Third Edition**, built with vanilla HTML, CSS, and JavaScript — no frameworks, no build step.
 
+![Main menu screenshot](assets/main_menu.png)
+
 ## Features ✨
 
 ### Character Building 🛠️
