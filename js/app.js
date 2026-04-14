@@ -559,13 +559,6 @@ function renderPLWarnings() {
     ));
   }
 
-  // Complication count warning
-  const filledComplications = state.complications.filter(c => c.description && c.description.trim()).length;
-  if (filledComplications < 2) {
-    container.appendChild(el('div', { className: 'pl-warning pl-warning-minor' },
-      `Complications: ${filledComplications} described (recommended minimum: 2)`
-    ));
-  }
 }
 
 // -- Abilities Tab --
