@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M&amp;M 3e Character Creator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header id="app-header">
+    <div class="header-left">
+      <h1>M&amp;M 3e Character Creator</h1>
+      <span class="subtitle">Mutants &amp; Masterminds Third Edition</span>
+    </div>
+    <div class="header-right">
+      <div class="pp-tracker">
+        <div class="pp-total">
+          <span class="pp-label">Power Points</span>
+          <span class="pp-value" id="pp-spent">0</span>
+          <span class="pp-separator">/</span>
+          <span class="pp-value" id="pp-total">150</span>
+        </div>
+        <div class="pp-remaining" id="pp-remaining-bar">
+          <div class="pp-bar" id="pp-bar"></div>
+        </div>
+        <span class="pp-remaining-text" id="pp-remaining-text">150 remaining</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="character-bar" id="character-bar">
+    <div class="character-bar-left">
+      <label class="character-bar-label" for="character-select">Character:</label>
+      <select id="character-select"></select>
+    </div>
+    <div class="character-bar-right">
+      <button class="btn-char btn-char-new" id="btn-char-new" title="New character">+ New</button>
+      <button class="btn-char btn-char-dup" id="btn-char-dup" title="Duplicate current character">⧉ Dup</button>
+      <button class="btn-char btn-char-del" id="btn-char-del" title="Delete current character">✕ Del</button>
+    </div>
+  </div>
+
+  <div class="pl-warnings" id="pl-warnings"></div>
+
+  <nav id="main-nav">
+    <button class="nav-btn active" data-tab="info">Info</button>
+    <button class="nav-btn" data-tab="abilities">Abilities <span class="cost-badge" id="cost-abilities">0</span></button>
+    <button class="nav-btn" data-tab="skills">Skills <span class="cost-badge" id="cost-skills">0</span></button>
+    <button class="nav-btn" data-tab="advantages">Advantages <span class="cost-badge" id="cost-advantages">0</span></button>
+    <button class="nav-btn" data-tab="powers">Powers <span class="cost-badge" id="cost-powers">0</span></button>
+    <button class="nav-btn" data-tab="equipment">Equipment</button>
+    <button class="nav-btn" data-tab="defenses">Defenses <span class="cost-badge" id="cost-defenses">0</span></button>
+    <button class="nav-btn" data-tab="offense">Offense</button>
+    <button class="nav-btn" data-tab="inplay">In-Play</button>
+    <button class="nav-btn" data-tab="summary">Summary</button>
+  </nav>
+
+  <main id="main-content">
+
+    <!-- INFO TAB -->
+    <section class="tab-panel active" id="tab-info">
+      <div class="panel">
+        <h2>Character Information</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="char-name">Character Name</label>
+            <input type="text" id="char-name" placeholder="Hero name">
+          </div>
+          <div class="form-group">
+            <label for="char-identity">Secret Identity</label>
+            <input type="text" id="char-identity" placeholder="Real name">
+          </div>
+          <div class="form-group">
+            <label for="char-pl">Power Level</label>
+            <div class="number-input">
+              <button class="btn-dec" data-target="char-pl">−</button>
+              <input type="number" id="char-pl" value="10" min="1" max="20">
+              <button class="btn-inc" data-target="char-pl">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="char-pp-per-pl">PP per PL</label>
+            <div class="number-input">
+              <button class="btn-dec" data-target="char-pp-per-pl">−</button>
+              <input type="number" id="char-pp-per-pl" value="15" min="1" max="30">
+              <button class="btn-inc" data-target="char-pp-per-pl">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="char-gender">Gender</label>
+            <input type="text" id="char-gender" placeholder="Gender">
+          </div>
+          <div class="form-group">
+            <label for="char-age">Age</label>
+            <input type="text" id="char-age" placeholder="Age">
+          </div>
+          <div class="form-group">
+            <label for="char-height">Height</label>
+            <input type="text" id="char-height" placeholder="Height">
+          </div>
+          <div class="form-group">
+            <label for="char-weight">Weight</label>
+            <input type="text" id="char-weight" placeholder="Weight">
+          </div>
+          <div class="form-group span-2">
+            <label for="char-appearance">Appearance</label>
+            <textarea id="char-appearance" rows="3" placeholder="Describe appearance..."></textarea>
+          </div>
+          <div class="form-group span-2">
+            <label for="char-background">Background</label>
+            <textarea id="char-background" rows="3" placeholder="Character background..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Complications</h2>
+        <p class="panel-note">Characters should have at least 2 complications. These earn Hero Points during play.</p>
+        <div id="complications-list"></div>
+        <button class="btn-add" id="btn-add-complication">+ Add Complication</button>
+      </div>
+
+      <div class="panel">
+        <h2>Save / Load</h2>
+        <div class="button-row">
+          <button class="btn-primary" id="btn-save">Save Character (JSON)</button>
+          <button class="btn-secondary" id="btn-load">Load Character</button>
+          <button class="btn-secondary" id="btn-export-text">Export as Text</button>
+          <button class="btn-danger" id="btn-clear">Reset Character</button>
+        </div>
+        <input type="file" id="file-input" accept=".json" style="display:none">
+      </div>
+    </section>
+
+    <!-- ABILITIES TAB -->
+    <section class="tab-panel" id="tab-abilities">
+      <div class="panel">
+        <h2>Abilities <span class="panel-cost">Cost: <strong id="abilities-cost-display">0 PP</strong> (2 PP per rank)</span></h2>
+        <div class="abilities-grid" id="abilities-grid"></div>
+      </div>
+    </section>
+
+    <!-- SKILLS TAB -->
+    <section class="tab-panel" id="tab-skills">
+      <div class="panel">
+        <h2>Skills <span class="panel-cost">Cost: <strong id="skills-cost-display">0 PP</strong> (1 PP per 2 ranks)</span></h2>
+        <p class="panel-note">Total ranks: <strong id="skills-total-ranks">0</strong></p>
+        <div class="skills-list" id="skills-list"></div>
+        <div class="specialty-add">
+          <select id="specialty-base-skill">
+            <option value="">Add specialty skill...</option>
+          </select>
+          <input type="text" id="specialty-name" placeholder="Specialty name">
+          <button class="btn-add" id="btn-add-specialty">+ Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADVANTAGES TAB -->
+    <section class="tab-panel" id="tab-advantages">
+      <div class="panel">
+        <h2>Advantages <span class="panel-cost">Cost: <strong id="advantages-cost-display">0 PP</strong> (1 PP per rank)</span></h2>
+        <div class="advantage-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="Combat">Combat</button>
+          <button class="filter-btn" data-filter="Fortune">Fortune</button>
+          <button class="filter-btn" data-filter="General">General</button>
+        </div>
+        <div class="advantages-grid" id="advantages-grid"></div>
+      </div>
+    </section>
+
+    <!-- POWERS TAB -->
+    <section class="tab-panel" id="tab-powers">
+      <div class="panel">
+        <h2>Powers <span class="panel-cost">Cost: <strong id="powers-cost-display">0 PP</strong></span></h2>
+        <div id="powers-list"></div>
+        <button class="btn-add btn-add-power" id="btn-add-power">+ Add Power</button>
+      </div>
+
+      <!-- Power creation modal -->
+      <div class="modal-overlay" id="power-modal" style="display:none">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 id="power-modal-title">New Power</h3>
+            <button class="modal-close" id="power-modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="power-name">Power Name</label>
+              <input type="text" id="power-name" placeholder="Name this power">
+            </div>
+            <div class="form-group">
+              <label for="power-effect">Base Effect</label>
+              <select id="power-effect">
+                <option value="">Select an effect...</option>
+              </select>
+            </div>
+            <div class="power-effect-info" id="power-effect-info" style="display:none"></div>
+            <div class="form-group" id="power-cost-override-group" style="display:none">
+              <label for="power-cost-override">Cost Per Rank</label>
+              <select id="power-cost-override"></select>
+            </div>
+            <div class="form-group">
+              <label for="power-rank">Rank</label>
+              <div class="number-input">
+                <button class="btn-dec" data-target="power-rank">−</button>
+                <input type="number" id="power-rank" value="1" min="1" max="30">
+                <button class="btn-inc" data-target="power-rank">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Extras</label>
+              <div class="modifier-list" id="power-extras-list"></div>
+              <select id="power-add-extra">
+                <option value="">Add extra...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Flaws</label>
+              <div class="modifier-list" id="power-flaws-list"></div>
+              <select id="power-add-flaw">
+                <option value="">Add flaw...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="power-notes">Notes</label>
+              <textarea id="power-notes" rows="2" placeholder="Descriptors, details..."></textarea>
+            </div>
+
+            <div class="power-cost-preview">
+              <span>Base Cost: <strong id="power-base-cost">0</strong>/rank</span>
+              <span>Modified Cost: <strong id="power-modified-cost">0</strong>/rank</span>
+              <span>Flat Modifiers: <strong id="power-flat-mods">0</strong></span>
+              <span class="power-total-cost">Total: <strong id="power-total-cost">0 PP</strong></span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" id="power-modal-cancel">Cancel</button>
+            <button class="btn-primary" id="power-modal-save">Save Power</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EQUIPMENT TAB -->
+    <section class="tab-panel" id="tab-equipment">
+      <div class="panel">
+        <h2>Equipment <span class="panel-cost">Budget: <strong id="equipment-budget-display">0 / 0 EP</strong></span></h2>
+        <p class="panel-note">Each rank of the Equipment advantage grants 5 equipment points. <span id="equipment-adv-note"></span></p>
+        <div class="equipment-filters">
+          <button class="filter-btn active" data-eqfilter="all">All</button>
+          <button class="filter-btn" data-eqfilter="Weapon">Weapons</button>
+          <button class="filter-btn" data-eqfilter="Armor">Armor</button>
+          <button class="filter-btn" data-eqfilter="Vehicle">Vehicles</button>
+          <button class="filter-btn" data-eqfilter="General">General</button>
+          <button class="filter-btn" data-eqfilter="Headquarters">HQ</button>
+        </div>
+        <div id="equipment-owned-list"></div>
+        <div class="equipment-add-section">
+          <h3>Add Equipment</h3>
+          <div class="equipment-catalog" id="equipment-catalog"></div>
+          <div class="equipment-custom-row">
+            <button class="btn-primary" id="btn-open-custom-equip" style="flex:1">+ Build Custom Equipment</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEFENSES TAB -->
+    <section class="tab-panel" id="tab-defenses">
+      <div class="panel">
+        <h2>Defenses <span class="panel-cost">Cost: <strong id="defenses-cost-display">0 PP</strong> (1 PP per rank)</span></h2>
+        <div class="defenses-grid" id="defenses-grid"></div>
+        <div class="defense-limits" id="defense-limits"></div>
+      </div>
+    </section>
+
+    <!-- OFFENSE TAB -->
+    <section class="tab-panel" id="tab-offense">
+      <div class="panel">
+        <h2>Offense</h2>
+        <div class="offense-info">
+          <div class="offense-stat">
+            <span class="offense-label">Initiative</span>
+            <span class="offense-value" id="initiative-value">+0</span>
+          </div>
+        </div>
+        <h3>Attacks</h3>
+        <div id="attacks-list"></div>
+        <button class="btn-add" id="btn-add-attack">+ Add Custom Attack</button>
+      </div>
+
+      <!-- Attack creation modal -->
+      <div class="modal-overlay" id="attack-modal" style="display:none">
+        <div class="modal modal-small">
+          <div class="modal-header">
+            <h3>Add Custom Attack</h3>
+            <button class="modal-close" id="attack-modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="attack-name">Attack Name</label>
+              <input type="text" id="attack-name" placeholder="e.g. Blast, Sword">
+            </div>
+            <div class="form-group">
+              <label for="attack-type">Type</label>
+              <select id="attack-type">
+                <option value="close">Close</option>
+                <option value="ranged">Ranged</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="attack-bonus">Attack Bonus</label>
+              <input type="number" id="attack-bonus" value="0">
+            </div>
+            <div class="form-group">
+              <label for="attack-effect">Effect / DC</label>
+              <input type="text" id="attack-effect" placeholder="e.g. Damage 10">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" id="attack-modal-cancel">Cancel</button>
+            <button class="btn-primary" id="attack-modal-save">Add Attack</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IN-PLAY TAB -->
+    <section class="tab-panel" id="tab-inplay">
+      <div class="panel inplay-panel">
+        <h2>In-Play Tracker</h2>
+
+        <!-- Quick-reference stats bar -->
+        <div class="inplay-stats-bar" id="inplay-stats-bar"></div>
+
+        <!-- Equipment effects -->
+        <div class="inplay-section inplay-equip-effects" id="inplay-equip-effects" style="display:none">
+          <h3>Equipment Effects</h3>
+          <div id="inplay-equip-effects-list"></div>
+        </div>
+
+        <!-- Hero Points & Toughness Penalty -->
+        <div class="inplay-row">
+          <div class="inplay-block">
+            <h3>Hero Points</h3>
+            <div class="inplay-counter" id="inplay-hp-counter"></div>
+          </div>
+          <div class="inplay-block">
+            <h3>Toughness Penalty</h3>
+            <div class="inplay-counter" id="inplay-tough-counter"></div>
+          </div>
+          <div class="inplay-block">
+            <h3>Exhaustion</h3>
+            <div class="inplay-exhaustion" id="inplay-exhaustion"></div>
+          </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="inplay-section">
+          <h3>Conditions</h3>
+          <div class="inplay-conditions-grid" id="inplay-conditions-grid"></div>
+          <div class="inplay-conditions-summary" id="inplay-conditions-summary"></div>
+        </div>
+
+        <!-- Active sustained powers -->
+        <div class="inplay-section">
+          <h3>Active Effects</h3>
+          <p class="panel-note">Track sustained / concentration powers and temporary effects.</p>
+          <div id="inplay-active-effects-list"></div>
+          <div class="inplay-add-effect-row">
+            <input type="text" id="inplay-new-effect" placeholder="Effect name / description">
+            <button class="btn-add" id="btn-add-active-effect">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Session notes / log -->
+        <div class="inplay-section">
+          <h3>Session Notes</h3>
+          <textarea id="inplay-notes" rows="4" placeholder="Track events, reminders, turn-by-turn notes..."></textarea>
+        </div>
+
+        <!-- Reset button -->
+        <div class="inplay-section" style="text-align:center;margin-top:1rem">
+          <button class="btn-secondary" id="btn-inplay-reset">Reset Tracker (New Scene)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUMMARY TAB -->
+    <section class="tab-panel" id="tab-summary">
+      <div class="panel">
+        <h2>Character Summary
+          <button class="btn-secondary" id="btn-copy-summary" style="font-size:0.8rem;padding:0.3rem 0.8rem;margin-left:auto">Copy to Clipboard</button>
+        </h2>
+        <div id="summary-content"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Custom Equipment Builder Modal -->
+  <div class="modal-overlay" id="custom-equip-modal" style="display:none">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 id="custom-equip-modal-title">Build Custom Equipment</h3>
+        <button class="modal-close" id="custom-equip-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="custom-equip-name">Equipment Name</label>
+          <input type="text" id="custom-equip-name" placeholder="e.g. Laser Rifle, Magic Armor, Grappling Hook">
+        </div>
+
+        <div class="ce-effects-section">
+          <div class="ce-effects-header">
+            <h4>Effects</h4>
+            <button class="btn-add" id="btn-ce-add-effect">+ Add Effect</button>
+          </div>
+          <div id="ce-effects-list"></div>
+        </div>
+
+        <div class="form-group" style="margin-top:0.75rem">
+          <label for="custom-equip-notes">Notes <span style="font-weight:normal;color:var(--text-dim)">(optional)</span></label>
+          <input type="text" id="custom-equip-notes" placeholder="Additional details, descriptors, etc.">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="ce-cost-preview" id="ce-cost-preview">Total: 0 EP</div>
+        <button class="btn-secondary" id="custom-equip-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="custom-equip-modal-save">Add Equipment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minion Modal -->
+  <div class="modal-overlay" id="minion-modal" style="display:none">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 id="minion-modal-title">Edit Minion</h3>
+        <button class="modal-close" id="minion-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="minion-budget-bar">
+          PP Budget: <strong id="minion-pp-budget">0</strong> |
+          Spent: <strong id="minion-pp-spent">0</strong> |
+          Remaining: <strong id="minion-pp-remaining">0</strong>
+        </div>
+        <div class="form-group">
+          <label for="minion-name">Name</label>
+          <input type="text" id="minion-name" placeholder="Minion name">
+        </div>
+        <div class="form-group">
+          <label>Abilities <span class="form-hint">(2 PP per rank, absent = −10 PP)</span></label>
+          <div class="minion-abilities-grid" id="minion-abilities-grid"></div>
+        </div>
+        <div class="form-group">
+          <label for="minion-defenses">Defenses <span class="form-hint">(1 PP per rank bought)</span></label>
+          <div class="minion-defenses-grid" id="minion-defenses-grid"></div>
+        </div>
+        <div class="form-group">
+          <label>Skills <span class="form-hint">(½ PP per rank)</span></label>
+          <div id="minion-skills-list"></div>
+          <div class="minion-add-specialty-row">
+            <select id="minion-specialty-base"><option value="">Add specialty...</option></select>
+            <input type="text" id="minion-specialty-name" placeholder="Specialty name">
+            <button class="btn-secondary" id="minion-btn-add-specialty">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Advantages <span class="form-hint">(cost varies)</span></label>
+          <div class="minion-advantages-grid" id="minion-advantages-grid"></div>
+        </div>
+        <div class="form-group">
+          <label>Powers <span class="form-hint">(cost varies)</span></label>
+          <div id="minion-powers-list"></div>
+          <button class="btn-secondary" id="minion-btn-add-power" style="width:100%;margin-top:0.4rem">+ Add Power</button>
+        </div>
+        <div class="form-group">
+          <label for="minion-offense">Offense</label>
+          <textarea id="minion-offense" rows="2" placeholder="Init +4, Claws +6 (Damage 4)..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="minion-notes">Notes</label>
+          <textarea id="minion-notes" rows="2" placeholder="Description, complications..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="minion-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="minion-modal-save">Save Minion</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Mutants &amp; Masterminds is &copy; Green Ronin Publishing. This is an unofficial fan tool.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
