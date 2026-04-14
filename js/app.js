@@ -23,6 +23,7 @@ const state = {
   equipment: [],       // [{ id, name, cost, type, details, custom }]
   attacks: [],         // [{ id, name, type, bonus, effect }]
   complications: [],   // [{ type, description }]
+  allowNegativeSkills: false,
   minions: [],         // [{ id, name, sourceType, sourceId, ppBudget, abilities, defenses, skills, advantages, powers, attacks, notes }]
   inPlay: { heroPoints: 1, toughnessPenalty: 0, conditions: [], exhaustion: 0, activeEffects: [], notes: '' },
   nextPowerId: 1,
@@ -582,15 +583,16 @@ function renderAbilities() {
       el('div', { className: 'ability-value' },
         el('button', {
           className: 'btn-dec',
-          onClick: () => { if (!isAbsent) { state.abilities[a.id]--; renderAll(); } }
+          onClick: () => { if (!isAbsent && state.abilities[a.id] > -5) { state.abilities[a.id]--; renderAll(); } }
         }, '−'),
         el('input', {
           type: 'number',
           value: isAbsent ? '—' : val,
+          min: '-5',
           disabled: isAbsent ? 'true' : undefined,
           onInput: (e) => {
             const v = parseInt(e.target.value);
-            if (!isNaN(v)) { state.abilities[a.id] = v; renderAll(); }
+            if (!isNaN(v)) { state.abilities[a.id] = Math.max(-5, v); renderAll(); }
           }
         }),
         el('button', {
@@ -647,15 +649,15 @@ function renderSkills() {
       el('div', { className: 'skill-ranks' },
         el('button', {
           className: 'btn-dec',
-          onClick: () => { if (skill.ranks > 0) { skill.ranks--; renderAll(); } }
+          onClick: () => { if (state.allowNegativeSkills ? true : skill.ranks > 0) { skill.ranks--; renderAll(); } }
         }, '−'),
         el('input', {
           type: 'number',
           value: skill.ranks,
-          min: '0',
+          min: state.allowNegativeSkills ? undefined : '0',
           onInput: (e) => {
             const v = parseInt(e.target.value);
-            if (!isNaN(v) && v >= 0) { skill.ranks = v; renderAll(); }
+            if (!isNaN(v) && (state.allowNegativeSkills || v >= 0)) { skill.ranks = v; renderAll(); }
           }
         }),
         el('button', {
@@ -673,6 +675,7 @@ function renderSkills() {
   });
 
   $('#skills-total-ranks').textContent = getSkillsTotalRanks();
+  $('#allow-negative-skills').checked = state.allowNegativeSkills;
 
   // Populate specialty dropdown
   const select = $('#specialty-base-skill');
@@ -3451,6 +3454,13 @@ function setupAttackModal() {
 // ========== SPECIALTY SKILL ==========
 function setupSpecialtySkill() {
   $('#btn-add-specialty').addEventListener('click', addSpecialtySkill);
+  $('#allow-negative-skills').addEventListener('change', (e) => {
+    state.allowNegativeSkills = e.target.checked;
+    if (!e.target.checked) {
+      state.skills.forEach(s => { if (s.ranks < 0) s.ranks = 0; });
+    }
+    renderAll();
+  });
 }
 
 // ========== COMPLICATIONS ==========
@@ -3480,6 +3490,7 @@ function getDefaultState() {
     defenses: { dodge: 0, parry: 0, fortitude: 0, will: 0 },
     equipment: [],
     attacks: [], complications: [{ type: 'Motivation', description: '' }, { type: 'Identity', description: '' }],
+    allowNegativeSkills: false,
     minions: [], inPlay: { heroPoints: 1, toughnessPenalty: 0, conditions: [], exhaustion: 0, activeEffects: [], notes: '' },
     nextPowerId: 1, nextAttackId: 1, nextArrayId: 1, nextMinionId: 1, nextEquipId: 1,
   };

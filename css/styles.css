@@ -329,6 +329,16 @@ body {
   margin-bottom: 1rem;
 }
 
+.allow-negative-skills-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
 /* Form Elements */
 .form-grid {
   display: grid;
