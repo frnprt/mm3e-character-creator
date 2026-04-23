@@ -141,7 +141,7 @@ const POWER_EFFECTS = [
   // Defense Effects
   { id: 'deflect', name: 'Deflect', type: 'Defense', costPerRank: 1, action: 'Standard', range: 'Ranged', duration: 'Instant', resistance: '-', description: 'Deflect ranged attacks' },
   { id: 'healing', name: 'Healing', type: 'General', costPerRank: 2, action: 'Standard', range: 'Close', duration: 'Instant', resistance: '-', description: 'Heal damage conditions' },
-  { id: 'immunity', name: 'Immunity', type: 'Defense', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Immune to certain effects' },
+  { id: 'immunity', name: 'Immunity', type: 'Defense', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Immune to certain effects' },
   { id: 'immortality', name: 'Immortality', type: 'Defense', costPerRank: 2, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Return from death; time halved per rank' },
   { id: 'protection', name: 'Protection', type: 'Defense', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Increase Toughness' },
   { id: 'regeneration', name: 'Regeneration', type: 'Defense', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Recover from damage over time' },
@@ -292,7 +292,7 @@ const POWER_FLAWS = [
   { id: 'grabBased', name: 'Grab-Based', costType: 'perRank', costValue: -1, noRanks: true, description: 'Must successfully grab target first' },
   { id: 'increasedAction', name: 'Increased Action', costType: 'perRank', costValue: -1, description: 'Action to use increases by one step (Free\u2192Move\u2192Standard\u2192Full)' },
   { id: 'limited', name: 'Limited', costType: 'perRank', costValue: -1, noRanks: true, description: 'Effect works in roughly half of normal circumstances' },
-  { id: 'permanent', name: 'Permanent', costType: 'perRank', costValue: 0, noRanks: true, description: 'Cannot turn off or adjust (changes Continuous to +0)' },
+  { id: 'permanent', name: 'Permanent', costType: 'perRank', costValue: -1, noRanks: true, description: 'Cannot turn off or adjust (Sustained becomes Permanent)' },
   { id: 'reducedRange', name: 'Reduced Range', costType: 'perRank', costValue: -1, description: 'Decrease range by one step per rank (Perception→Ranged→Close)' },
   { id: 'resistible', name: 'Resistible', costType: 'perRank', costValue: -1, noRanks: true, description: 'Additional resistance check to avoid the effect' },
   { id: 'senseDependent', name: 'Sense-Dependent', costType: 'perRank', costValue: -1, noRanks: true, description: 'Target must perceive you/effect via a specific sense type' },
@@ -332,33 +332,51 @@ const POWER_FLAWS = [
   { id: 'removable', name: 'Removable (-1/5 pts)', costType: 'special', costValue: -1, description: 'Device can be taken with Disarm/Grab. Reduce total by 1 per 5.' },
 ];
 
-// Immunity costs reference
-const IMMUNITY_EXAMPLES = [
-  { name: 'Aging', ranks: 1 },
-  { name: 'Disease', ranks: 1 },
-  { name: 'Poison', ranks: 1 },
-  { name: 'Environmental Cold', ranks: 1 },
-  { name: 'Environmental Heat', ranks: 1 },
-  { name: 'Environmental Pressure', ranks: 1 },
-  { name: 'Environmental Radiation', ranks: 1 },
-  { name: 'Starvation/Thirst', ranks: 1 },
-  { name: 'Suffocation', ranks: 1 },
-  { name: 'Sleep', ranks: 1 },
-  { name: 'Critical Hits', ranks: 2 },
-  { name: 'Sensory Affliction Effects', ranks: 5 },
-  { name: 'Interaction Skills', ranks: 5 },
-  { name: 'Entrapment (grab/snare)', ranks: 5 },
-  { name: 'Fatigue Effects', ranks: 5 },
-  { name: 'All Environmental', ranks: 5 },
-  { name: 'Life Support (full)', ranks: 10 },
-  { name: 'Common Damage Type', ranks: 10 },
-  { name: 'Fortitude Effects (half)', ranks: 15 },
-  { name: 'Will Effects (half)', ranks: 15 },
-  { name: 'Toughness Effects (half)', ranks: 20 },
-  { name: 'Fortitude Effects (full)', ranks: 30 },
-  { name: 'Will Effects (full)', ranks: 30 },
-  { name: 'Toughness Effects (full)', ranks: 40 },
-  { name: 'All Damage', ranks: 80 },
+// Immunity options with group/includes relationships
+const IMMUNITY_OPTIONS = [
+  // Individual options (1 rank each)
+  { id: 'aging', name: 'Aging', ranks: 1, group: 'individual' },
+  { id: 'disease', name: 'Disease', ranks: 1, group: 'lifeSupport' },
+  { id: 'poison', name: 'Poison', ranks: 1, group: 'lifeSupport' },
+  { id: 'envCold', name: 'Environmental Cold', ranks: 1, group: 'environmental' },
+  { id: 'envHeat', name: 'Environmental Heat', ranks: 1, group: 'environmental' },
+  { id: 'envPressure', name: 'Environmental Pressure', ranks: 1, group: 'environmental' },
+  { id: 'envRadiation', name: 'Environmental Radiation', ranks: 1, group: 'environmental' },
+  { id: 'starvationThirst', name: 'Starvation & Thirst', ranks: 1, group: 'lifeSupport' },
+  { id: 'suffocation', name: 'Suffocation', ranks: 1, group: 'lifeSupport' },
+  { id: 'sleep', name: 'Sleep', ranks: 1, group: 'individual' },
+  // 2-rank options
+  { id: 'criticalHits', name: 'Critical Hits', ranks: 2, group: 'individual' },
+  // 5-rank grouped options
+  { id: 'sensoryAffliction', name: 'Sensory Affliction Effects', ranks: 5, group: 'individual' },
+  { id: 'interactionSkills', name: 'Interaction Skills', ranks: 5, group: 'individual' },
+  { id: 'entrapment', name: 'Entrapment (grab/snare)', ranks: 5, group: 'individual' },
+  { id: 'fatigueEffects', name: 'Fatigue Effects', ranks: 5, group: 'individual' },
+  // Composite: All Environmental (includes the 4 env options)
+  { id: 'allEnvironmental', name: 'All Environmental', ranks: 5, group: 'composite', includes: ['envCold', 'envHeat', 'envPressure', 'envRadiation'] },
+  // Composite: Life Support (includes disease, poison, env×4, starvation, suffocation)
+  { id: 'lifeSupport', name: 'Life Support', ranks: 10, group: 'composite', includes: ['disease', 'poison', 'envCold', 'envHeat', 'envPressure', 'envRadiation', 'starvationThirst', 'suffocation'] },
+  // 10-rank options
+  { id: 'commonDamage', name: 'Common Damage Type', ranks: 10, group: 'individual' },
+  // Half/full effect immunities
+  { id: 'fortHalf', name: 'Fortitude Effects (half)', ranks: 15, group: 'individual' },
+  { id: 'willHalf', name: 'Will Effects (half)', ranks: 15, group: 'individual' },
+  { id: 'toughHalf', name: 'Toughness Effects (half)', ranks: 20, group: 'individual' },
+  { id: 'fortFull', name: 'Fortitude Effects (full)', ranks: 30, group: 'individual' },
+  { id: 'willFull', name: 'Will Effects (full)', ranks: 30, group: 'individual' },
+  { id: 'toughFull', name: 'Toughness Effects (full)', ranks: 40, group: 'individual' },
+  { id: 'allDamage', name: 'All Damage', ranks: 80, group: 'individual' },
+];
+
+// Legacy alias for reference display
+const IMMUNITY_EXAMPLES = IMMUNITY_OPTIONS;
+
+// Insubstantial types — each rank is a specific form
+const INSUBSTANTIAL_TYPES = [
+  { id: 'fluid', name: 'Fluid', rank: 1, description: 'Liquid form; flow through any opening that is not watertight, escape non-watertight restraints, retain normal Strength' },
+  { id: 'gaseous', name: 'Gaseous', rank: 2, description: 'Gaseous form; no effective Strength, Immunity to Physical Damage, energy and area attacks affect normally, flow through non-airtight openings' },
+  { id: 'energy', name: 'Energy', rank: 3, description: 'Coherent energy form; no effective Strength, Immunity to Physical Damage, energy attacks damage normally (except own type), pass through energy-permeable barriers' },
+  { id: 'incorporeal', name: 'Incorporeal', rank: 4, description: 'Incorporeal phantom; no effective Strength, Immunity to Physical and Energy Damage, pass through solid matter, one chosen effect/descriptor still affects you' },
 ];
 
 // Complication types

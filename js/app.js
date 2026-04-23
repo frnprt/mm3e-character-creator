@@ -877,6 +877,24 @@ function buildPowerCard(power, options = {}) {
     card.appendChild(el('div', { className: 'power-card-notes' }, power.notes));
   }
 
+  // Show immunity selections on card
+  if (power.effectId === 'immunity' && power.immunityOptions && power.immunityOptions.length > 0) {
+    const names = power.immunityOptions
+      .map(id => { const opt = IMMUNITY_OPTIONS.find(o => o.id === id); return opt ? opt.name : null; })
+      .filter(Boolean);
+    if (names.length) {
+      card.appendChild(el('div', { className: 'power-card-immunity-list' }, `Immunities: ${names.join(', ')}`));
+    }
+  }
+
+  // Show insubstantial type on card
+  if (power.effectId === 'insubstantial' && power.insubstantialType) {
+    const insType = INSUBSTANTIAL_TYPES.find(t => t.id === power.insubstantialType);
+    if (insType) {
+      card.appendChild(el('div', { className: 'power-card-immunity-list' }, `Type: ${insType.name} — ${insType.description}`));
+    }
+  }
+
   return card;
 }
 
@@ -1406,6 +1424,8 @@ function editMinionPower(minion, idx) {
     $('#power-notes').value = power.notes || '';
     modalExtras = [...(power.extras || [])].map(e => ({ ...e }));
     modalFlaws = [...(power.flaws || [])].map(f => ({ ...f }));
+    modalImmunitySelections = [...(power.immunityOptions || [])];
+    modalInsubstantialType = power.insubstantialType || null;
     updatePowerEffectInfo();
     if (power.costPerRankOverride != null) {
       $('#power-cost-override').value = power.costPerRankOverride;
@@ -1521,6 +1541,8 @@ function openPowerModal(powerId) {
       $('#power-notes').value = power.notes || '';
       modalExtras = [...(power.extras || [])].map(e => ({ ...e }));
       modalFlaws = [...(power.flaws || [])].map(f => ({ ...f }));
+      modalImmunitySelections = [...(power.immunityOptions || [])];
+      modalInsubstantialType = power.insubstantialType || null;
       // Restore cost override after updatePowerEffectInfo populates the select
       if (power.costPerRankOverride != null) {
         updatePowerEffectInfo();
@@ -1535,6 +1557,8 @@ function openPowerModal(powerId) {
     $('#power-notes').value = '';
     modalExtras = [];
     modalFlaws = [];
+    modalImmunitySelections = [];
+    modalInsubstantialType = null;
   }
 
   updatePowerEffectInfo();
@@ -1587,6 +1611,8 @@ function populateModifierDropdowns() {
 
 let modalExtras = [];
 let modalFlaws = [];
+let modalImmunitySelections = []; // array of IMMUNITY_OPTIONS ids
+let modalInsubstantialType = null; // INSUBSTANTIAL_TYPES id
 
 function renderModalModifiers() {
   const extList = $('#power-extras-list');
@@ -1645,6 +1671,148 @@ function renderModalModifiers() {
   });
 }
 
+function renderImmunityOptions() {
+  const grid = $('#immunity-options-grid');
+  const group = $('#immunity-options-group');
+  const effectId = $('#power-effect').value;
+
+  if (effectId !== 'immunity') {
+    group.style.display = 'none';
+    return;
+  }
+  group.style.display = '';
+  grid.innerHTML = '';
+
+  IMMUNITY_OPTIONS.forEach(opt => {
+    const isChecked = modalImmunitySelections.includes(opt.id);
+    // Determine if this item is force-checked by a composite
+    const forcedByComposite = IMMUNITY_OPTIONS.some(
+      comp => comp.includes && comp.includes.includes(opt.id) && modalImmunitySelections.includes(comp.id)
+    );
+
+    const item = el('label', { className: `immunity-option-item${isChecked ? ' active' : ''}${forcedByComposite ? ' forced' : ''}${opt.includes ? ' composite' : ''}` },
+      el('input', {
+        type: 'checkbox',
+        ...(isChecked ? { checked: '' } : {}),
+        ...(forcedByComposite ? { disabled: '' } : {}),
+        onChange: (e) => {
+          if (e.target.checked) {
+            if (!modalImmunitySelections.includes(opt.id)) {
+              modalImmunitySelections.push(opt.id);
+            }
+            // If composite, also check all included
+            if (opt.includes) {
+              opt.includes.forEach(subId => {
+                if (!modalImmunitySelections.includes(subId)) {
+                  modalImmunitySelections.push(subId);
+                }
+              });
+            }
+          } else {
+            modalImmunitySelections = modalImmunitySelections.filter(id => id !== opt.id);
+            // If composite, uncheck included items (unless held by another composite)
+            if (opt.includes) {
+              opt.includes.forEach(subId => {
+                const stillHeld = IMMUNITY_OPTIONS.some(
+                  comp => comp.includes && comp.includes.includes(subId) && comp.id !== opt.id && modalImmunitySelections.includes(comp.id)
+                );
+                if (!stillHeld) {
+                  modalImmunitySelections = modalImmunitySelections.filter(id => id !== subId);
+                }
+              });
+            }
+            // If unchecking a sub-item, also uncheck any composite that includes it
+            IMMUNITY_OPTIONS.forEach(comp => {
+              if (comp.includes && comp.includes.includes(opt.id) && modalImmunitySelections.includes(comp.id)) {
+                modalImmunitySelections = modalImmunitySelections.filter(id => id !== comp.id);
+              }
+            });
+          }
+          // Auto-check composites if all sub-items are selected
+          IMMUNITY_OPTIONS.forEach(comp => {
+            if (comp.includes && !modalImmunitySelections.includes(comp.id)) {
+              if (comp.includes.every(subId => modalImmunitySelections.includes(subId))) {
+                modalImmunitySelections.push(comp.id);
+              }
+            }
+          });
+          syncImmunityRank();
+          renderImmunityOptions();
+          updatePowerCostPreview();
+        }
+      }),
+      el('span', { className: 'immunity-option-name' }, opt.name),
+      el('span', { className: 'immunity-option-ranks' }, `${opt.ranks}`),
+    );
+    grid.appendChild(item);
+  });
+}
+
+function syncImmunityRank() {
+  // Calculate total ranks from selected options, avoiding double-counting.
+  // Process composites largest-first so a bigger composite (Life Support 10)
+  // subsumes smaller ones (All Environmental 5) whose items it fully covers.
+  const coveredByComposite = new Set();
+  let total = 0;
+
+  const composites = IMMUNITY_OPTIONS
+    .filter(opt => opt.includes && modalImmunitySelections.includes(opt.id))
+    .sort((a, b) => b.ranks - a.ranks);
+
+  composites.forEach(opt => {
+    // Skip if every sub-item is already covered by a larger composite
+    if (opt.includes.every(subId => coveredByComposite.has(subId))) return;
+    total += opt.ranks;
+    opt.includes.forEach(subId => coveredByComposite.add(subId));
+  });
+
+  // Count non-composite items not covered
+  IMMUNITY_OPTIONS.forEach(opt => {
+    if (!opt.includes && modalImmunitySelections.includes(opt.id) && !coveredByComposite.has(opt.id)) {
+      total += opt.ranks;
+    }
+  });
+
+  $('#power-rank').value = Math.max(1, total);
+}
+
+function renderInsubstantialOptions() {
+  const grid = $('#insubstantial-options-grid');
+  const group = $('#insubstantial-options-group');
+  const effectId = $('#power-effect').value;
+
+  if (effectId !== 'insubstantial') {
+    group.style.display = 'none';
+    return;
+  }
+  group.style.display = '';
+  grid.innerHTML = '';
+
+  INSUBSTANTIAL_TYPES.forEach(opt => {
+    const isSelected = modalInsubstantialType === opt.id;
+    const item = el('label', { className: `immunity-option-item${isSelected ? ' active' : ''}` },
+      el('input', {
+        type: 'radio',
+        name: 'insubstantial-type',
+        value: opt.id,
+        ...(isSelected ? { checked: '' } : {}),
+        onChange: () => {
+          modalInsubstantialType = opt.id;
+          $('#power-rank').value = opt.rank;
+          renderInsubstantialOptions();
+          updatePowerCostPreview();
+        }
+      }),
+      el('span', { className: 'immunity-option-name' },
+        el('strong', null, `Rank ${opt.rank}: ${opt.name}`),
+        el('span', { style: 'display:block;font-size:0.75rem;color:var(--text-dim);font-weight:400' }, opt.description),
+      ),
+      el('span', { className: 'immunity-option-ranks' }, `${opt.rank * 5} PP`),
+    );
+    grid.appendChild(item);
+  });
+}
+
 function updatePowerEffectInfo() {
   const effectId = $('#power-effect').value;
   const infoDiv = $('#power-effect-info');
@@ -1672,13 +1840,12 @@ function updatePowerEffectInfo() {
     effect.resistance !== '-' ? el('span', null, `Resist: ${effect.resistance}`) : null,
   ));
 
-  // Reference tables for specific effects
-  const refMap = { immunity: IMMUNITY_EXAMPLES, movement: MOVEMENT_TYPES, senses: SENSES_TYPES, comprehend: COMPREHEND_TYPES };
+  // Reference tables for specific effects (exclude immunity — handled by checkboxes)
+  const refMap = { movement: MOVEMENT_TYPES, senses: SENSES_TYPES, comprehend: COMPREHEND_TYPES };
   const refData = refMap[effectId];
   if (refData && refData.length) {
     const refDiv = el('div', { className: 'power-effect-ref' });
     const refTitle = el('div', { className: 'power-effect-ref-title' },
-      effectId === 'immunity' ? 'Common Immunities (ranks needed):' :
       effectId === 'movement' ? 'Movement Types (2 PP/rank each):' :
       effectId === 'senses' ? 'Sense Options (ranks each):' :
       'Comprehend Types (2 PP/rank each):'
@@ -1693,6 +1860,12 @@ function updatePowerEffectInfo() {
     refDiv.appendChild(grid);
     infoDiv.appendChild(refDiv);
   }
+
+  // Immunity checkboxes
+  renderImmunityOptions();
+
+  // Insubstantial type selector
+  renderInsubstantialOptions();
 
   // Affliction conditions reference
   if (effectId === 'affliction') {
@@ -1782,12 +1955,16 @@ function savePowerFromModal() {
   // Minion power mode
   if (editingMinionRef) {
     const minion = editingMinionRef;
+    const immunityOptions = effectId === 'immunity' ? [...modalImmunitySelections] : undefined;
+    const insubstantialType = effectId === 'insubstantial' ? modalInsubstantialType : undefined;
     if (editingMinionPowerIdx >= 0) {
       minion.powers[editingMinionPowerIdx] = {
         ...minion.powers[editingMinionPowerIdx],
         name: name || minion.powers[editingMinionPowerIdx].name,
         effectId, rank, costPerRankOverride,
         extras: [...modalExtras], flaws: [...modalFlaws], notes,
+        ...(immunityOptions ? { immunityOptions } : {}),
+        ...(insubstantialType ? { insubstantialType } : {}),
       };
     } else {
       minion.powers.push({
@@ -1795,6 +1972,8 @@ function savePowerFromModal() {
         name: name || effect?.name || 'Power',
         effectId, rank, costPerRankOverride,
         extras: [...modalExtras], flaws: [...modalFlaws], notes,
+        ...(immunityOptions ? { immunityOptions } : {}),
+        ...(insubstantialType ? { insubstantialType } : {}),
       });
     }
     closePowerModal();
@@ -1806,6 +1985,8 @@ function savePowerFromModal() {
   if (editingPowerId) {
     const idx = state.powers.findIndex(p => p.id === editingPowerId);
     if (idx !== -1) {
+      const immunityOptions = effectId === 'immunity' ? [...modalImmunitySelections] : undefined;
+      const insubstantialType = effectId === 'insubstantial' ? modalInsubstantialType : undefined;
       state.powers[idx] = {
         ...state.powers[idx],
         name: name || state.powers[idx].name,
@@ -1815,9 +1996,13 @@ function savePowerFromModal() {
         extras: [...modalExtras],
         flaws: [...modalFlaws],
         notes,
+        ...(immunityOptions ? { immunityOptions } : {}),
+        ...(insubstantialType ? { insubstantialType } : {}),
       };
     }
   } else {
+    const immunityOptions = effectId === 'immunity' ? [...modalImmunitySelections] : undefined;
+    const insubstantialType = effectId === 'insubstantial' ? modalInsubstantialType : undefined;
     const newPower = {
       id: state.nextPowerId++,
       name: name || POWER_EFFECTS.find(e => e.id === effectId)?.name || 'Power',
@@ -1827,6 +2012,8 @@ function savePowerFromModal() {
       extras: [...modalExtras],
       flaws: [...modalFlaws],
       notes,
+      ...(immunityOptions ? { immunityOptions } : {}),
+      ...(insubstantialType ? { insubstantialType } : {}),
     };
     state.powers.push(newPower);
 
@@ -1853,6 +2040,8 @@ function closePowerModal() {
   // Don't clear editingMinionRef here — minion modal is still open underneath
   modalExtras = [];
   modalFlaws = [];
+  modalImmunitySelections = [];
+  modalInsubstantialType = null;
 }
 
 function editPower(id) {
@@ -3096,6 +3285,16 @@ function renderSummary() {
     if (flaws.length) line += `, Flaws: ${flaws.join(', ')}`;
     line += ` • ${cost} PP`;
     lines.push(line);
+    if (p.effectId === 'immunity' && p.immunityOptions && p.immunityOptions.length > 0) {
+      const names = p.immunityOptions
+        .map(id => { const opt = IMMUNITY_OPTIONS.find(o => o.id === id); return opt ? opt.name : null; })
+        .filter(Boolean);
+      if (names.length) lines.push(`${indent}  [${names.join(', ')}]`);
+    }
+    if (p.effectId === 'insubstantial' && p.insubstantialType) {
+      const insType = INSUBSTANTIAL_TYPES.find(t => t.id === p.insubstantialType);
+      if (insType) lines.push(`${indent}  [${insType.name}: ${insType.description}]`);
+    }
     if (p.notes) lines.push(`${indent}  ${p.notes}`);
   }
 
