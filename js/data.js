@@ -151,7 +151,7 @@ const POWER_EFFECTS = [
   { id: 'feature', name: 'Feature', type: 'General', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Minor useful ability' },
   { id: 'growth', name: 'Growth', type: 'General', costPerRank: 2, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Increase size' },
   { id: 'insubstantial', name: 'Insubstantial', type: 'General', costPerRank: 5, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Become incorporeal or energy' },
-  { id: 'luck', name: 'Luck Control', type: 'Control', costPerRank: 3, action: 'Free', range: 'Ranged', duration: 'Instant', resistance: '-', description: 'Control luck and fortune' },
+  { id: 'luck', name: 'Luck Control', type: 'Control', costPerRank: 3, action: 'Reaction', range: 'Perception', duration: 'Instant', resistance: '-', description: 'Control luck and fortune' },
   { id: 'morph', name: 'Morph', type: 'General', costPerRank: 5, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Change appearance' },
   { id: 'quickness', name: 'Quickness', type: 'General', costPerRank: 1, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Perform routine tasks faster' },
   { id: 'shrinking', name: 'Shrinking', type: 'General', costPerRank: 2, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Decrease size' },
@@ -195,7 +195,8 @@ const POWER_EXTRAS = [
   { id: 'increasedRange1', name: 'Increased Range (+1 step)', costType: 'perRank', costValue: 1, noRanks: true, description: 'Increase range one step (Close\u2192Ranged or Ranged\u2192Perception)' },
   { id: 'increasedRange2', name: 'Increased Range (+2 steps)', costType: 'perRank', costValue: 2, noRanks: true, description: 'Increase range two steps (Close\u2192Perception)' },
   { id: 'multiattack', name: 'Multiattack', costType: 'perRank', costValue: 1, noRanks: true, description: 'Attack multiple targets or rapid fire for +2/+5 effect bonus' },
-  { id: 'reaction', name: 'Reaction', costType: 'perRank', costValue: 3, noRanks: true, description: 'Effect triggers as a reaction to a specified event' },
+  { id: 'reactionFree', name: 'Reaction (Free action, +1/rank)', costType: 'perRank', costValue: 1, noRanks: true, description: 'Reaction for effects whose default action is Free (+1/rank)' },
+  { id: 'reaction', name: 'Reaction (Standard action, +3/rank)', costType: 'perRank', costValue: 3, noRanks: true, description: 'Reaction for effects whose default action is Standard (+3/rank)' },
   { id: 'secondaryEffect', name: 'Secondary Effect', costType: 'perRank', costValue: 1, noRanks: true, description: 'Instant effect applies again on the next round automatically' },
   { id: 'selective', name: 'Selective', costType: 'perRank', costValue: 1, noRanks: true, description: 'Choose who is affected within an area' },
   // Area subtypes (+1/rank each except Perception which is +2)
@@ -342,8 +343,9 @@ const IMMUNITY_OPTIONS = [
   { id: 'envHeat', name: 'Environmental Heat', ranks: 1, group: 'environmental' },
   { id: 'envPressure', name: 'Environmental Pressure', ranks: 1, group: 'environmental' },
   { id: 'envRadiation', name: 'Environmental Radiation', ranks: 1, group: 'environmental' },
+  { id: 'envVacuum', name: 'Environmental Vacuum', ranks: 1, group: 'environmental' },
   { id: 'starvationThirst', name: 'Starvation & Thirst', ranks: 1, group: 'lifeSupport' },
-  { id: 'suffocation', name: 'Suffocation', ranks: 1, group: 'lifeSupport' },
+  { id: 'suffocation', name: 'Suffocation (all)', ranks: 2, group: 'lifeSupport' },
   { id: 'sleep', name: 'Sleep', ranks: 1, group: 'individual' },
   // 2-rank options
   { id: 'criticalHits', name: 'Critical Hits', ranks: 2, group: 'individual' },
@@ -353,18 +355,18 @@ const IMMUNITY_OPTIONS = [
   { id: 'entrapment', name: 'Entrapment (grab/snare)', ranks: 5, group: 'individual' },
   { id: 'fatigueEffects', name: 'Fatigue Effects', ranks: 5, group: 'individual' },
   // Composite: All Environmental (includes the 4 env options)
-  { id: 'allEnvironmental', name: 'All Environmental', ranks: 5, group: 'composite', includes: ['envCold', 'envHeat', 'envPressure', 'envRadiation'] },
+  { id: 'allEnvironmental', name: 'All Environmental', ranks: 5, group: 'composite', includes: ['envCold', 'envHeat', 'envPressure', 'envRadiation', 'envVacuum'] },
   // Composite: Life Support (includes disease, poison, env×4, starvation, suffocation)
-  { id: 'lifeSupport', name: 'Life Support', ranks: 10, group: 'composite', includes: ['disease', 'poison', 'envCold', 'envHeat', 'envPressure', 'envRadiation', 'starvationThirst', 'suffocation'] },
+  { id: 'lifeSupport', name: 'Life Support', ranks: 10, group: 'composite', includes: ['disease', 'poison', 'envCold', 'envHeat', 'envPressure', 'envRadiation', 'envVacuum', 'starvationThirst', 'suffocation'] },
   // 10-rank options
   { id: 'commonDamage', name: 'Common Damage Type', ranks: 10, group: 'individual' },
   // Half/full effect immunities
   { id: 'fortHalf', name: 'Fortitude Effects (half)', ranks: 15, group: 'individual' },
   { id: 'willHalf', name: 'Will Effects (half)', ranks: 15, group: 'individual' },
-  { id: 'toughHalf', name: 'Toughness Effects (half)', ranks: 20, group: 'individual' },
+  { id: 'toughHalf', name: 'Toughness Effects (half)', ranks: 40, group: 'individual' },
   { id: 'fortFull', name: 'Fortitude Effects (full)', ranks: 30, group: 'individual' },
   { id: 'willFull', name: 'Will Effects (full)', ranks: 30, group: 'individual' },
-  { id: 'toughFull', name: 'Toughness Effects (full)', ranks: 40, group: 'individual' },
+  { id: 'toughFull', name: 'Toughness Effects (full)', ranks: 80, group: 'individual' },
   { id: 'allDamage', name: 'All Damage', ranks: 80, group: 'individual' },
 ];
 
