@@ -135,7 +135,7 @@ const POWER_EFFECTS = [
   { id: 'weaken', name: 'Weaken', type: 'Attack', costPerRank: 1, action: 'Standard', range: 'Close', duration: 'Instant', resistance: 'Fort or Will', description: 'Reduce a trait' },
   // Control Effects
   { id: 'create', name: 'Create', type: 'Control', costPerRank: 2, action: 'Standard', range: 'Ranged', duration: 'Sustained', resistance: '-', description: 'Create solid objects' },
-  { id: 'environment', name: 'Environment', type: 'Control', costPerRank: 1, action: 'Standard', range: 'Close', duration: 'Sustained', resistance: '-', description: 'Alter environmental conditions (visibility, heat/cold, wind, etc.)' },
+  { id: 'environment', name: 'Environment', type: 'Control', costPerRank: 1, action: 'Standard', range: 'Rank', duration: 'Sustained', resistance: '-', description: 'Alter environmental conditions (visibility, heat/cold, wind, etc.)' },
   { id: 'moveObject', name: 'Move Object', type: 'Control', costPerRank: 2, action: 'Standard', range: 'Ranged', duration: 'Sustained', resistance: '-', description: 'Move objects at range' },
   { id: 'transform', name: 'Transform', type: 'Control', costPerRank: 2, action: 'Standard', range: 'Close', duration: 'Sustained', resistance: 'Fortitude', variableCost: [{cost: 2, label: 'One thing to one other (2/rank)'}, {cost: 3, label: 'One to broad group (3/rank)'}, {cost: 4, label: 'Broad to broad (4/rank)'}, {cost: 5, label: 'Anything to anything (5/rank)'}], description: 'Transform objects/creatures' },
   // Defense Effects
@@ -168,11 +168,11 @@ const POWER_EFFECTS = [
   { id: 'teleport', name: 'Teleport', type: 'Movement', costPerRank: 2, action: 'Move', range: 'Rank', duration: 'Instant', resistance: '-', description: 'Instant transportation' },
   // Sensory Effects
   { id: 'communication', name: 'Communication', type: 'Sensory', costPerRank: 4, action: 'Free', range: 'Rank', duration: 'Sustained', resistance: '-', description: 'Communicate at distance' },
-  { id: 'comprehend', name: 'Comprehend', type: 'Sensory', costPerRank: 2, action: 'None', range: 'Personal', duration: 'Sustained', resistance: '-', description: 'Understand languages/creatures' },
+  { id: 'comprehend', name: 'Comprehend', type: 'Sensory', costPerRank: 2, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Understand languages/creatures' },
   { id: 'concealment', name: 'Concealment', type: 'Sensory', costPerRank: 2, action: 'Free', range: 'Personal', duration: 'Sustained', resistance: '-', variableCost: [{cost: 1, label: 'One sense (1/rank)'}, {cost: 2, label: 'Entire sense type (2/rank)'}], description: 'Hide from a sense or sense type' },
   { id: 'illusion', name: 'Illusion', type: 'Control', costPerRank: 1, action: 'Standard', range: 'Perception', duration: 'Sustained', resistance: 'Will', variableCost: [{cost: 1, label: 'One sense type (1/rank)'}, {cost: 2, label: 'Two sense types (2/rank)'}, {cost: 3, label: 'Three sense types (3/rank)'}, {cost: 4, label: 'Four sense types (4/rank)'}, {cost: 5, label: 'All senses (5/rank)'}], description: 'Create false sensory impressions' },
   { id: 'mindReading', name: 'Mind Reading', type: 'Sensory', costPerRank: 2, action: 'Standard', range: 'Perception', duration: 'Sustained', resistance: 'Will', description: 'Read surface thoughts' },
-  { id: 'remoteSensing', name: 'Remote Sensing', type: 'Sensory', costPerRank: 1, action: 'Free', range: 'Rank', duration: 'Sustained', resistance: '-', variableCost: [{cost: 1, label: 'One sense type (1/rank)'}, {cost: 2, label: 'Two sense types (2/rank)'}, {cost: 3, label: 'Three sense types (3/rank)'}, {cost: 4, label: 'Four sense types (4/rank)'}], description: 'Perceive at a distance' },
+  { id: 'remoteSensing', name: 'Remote Sensing', type: 'Sensory', costPerRank: 1, action: 'Free', range: 'Rank', duration: 'Sustained', resistance: '-', variableCost: [{cost: 1, label: 'One sense type (1/rank)'}, {cost: 2, label: 'Two sense types (2/rank)'}, {cost: 3, label: 'Three sense types (3/rank)'}, {cost: 4, label: 'Four sense types (4/rank)'}, {cost: 5, label: 'All senses (5/rank)'}], description: 'Perceive at a distance' },
   { id: 'senses', name: 'Senses', type: 'Sensory', costPerRank: 1, action: 'None', range: 'Personal', duration: 'Permanent', resistance: '-', description: 'Enhanced or unusual senses' },
 ];
 
@@ -181,8 +181,8 @@ const POWER_EFFECT_TYPES = ['Attack', 'Control', 'Defense', 'General', 'Movement
 // Power Modifiers (Extras and Flaws) — Complete General + Effect-Specific
 const POWER_EXTRAS = [
   // General Extras
-  { id: 'affectsCorporeal', name: 'Affects Corporeal', costType: 'perRank', costValue: 1, description: 'Affect corporeal beings while insubstantial' },
-  { id: 'affectsInsubstantial', name: 'Affects Insubstantial', costType: 'perRank', costValue: 1, description: 'Half effect on insubstantial (1 rank) or full effect (2 ranks)' },
+  { id: 'affectsCorporeal', name: 'Affects Corporeal', costType: 'flat', costValue: 1, description: 'Affect corporeal beings while insubstantial (flat 1 per rank of extra)' },
+  { id: 'affectsInsubstantial', name: 'Affects Insubstantial', costType: 'flat', costValue: 1, maxRanks: 2, description: 'Half effect on insubstantial (1 rank, flat 1 pt) or full effect (2 ranks, flat 2 pts)' },
   { id: 'affectsObjects', name: 'Affects Objects', costType: 'perRank', costValue: 1, description: 'Effect works on objects (only or also, +1/rank)' },
   { id: 'affectsOthers', name: 'Affects Others', costType: 'perRank', costValue: 1, description: 'Personal range effect can also be used on others' },
   { id: 'alternateResistance0', name: 'Alternate Resistance (+0)', costType: 'perRank', costValue: 0, noRanks: true, description: 'Use a different but equally-effective resistance' },
@@ -276,10 +276,10 @@ const POWER_EXTRAS = [
   { id: 'turnabout', name: 'Turnabout', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['teleport'], description: '(Teleport) Teleport, take a standard action, then teleport back' },
   // Remote Sensing / Communication
   { id: 'dimensional', name: 'Dimensional', costType: 'flat', costValue: 1, appliesTo: ['remoteSensing', 'communication', 'teleport', 'movement'], description: '(Remote Sensing/Communication) Works across dimensions (1=one, 2=related, 3=any)' },
-  { id: 'noConduit', name: 'No Conduit', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['remoteSensing'], description: '(Remote Sensing) Attacks on your remote senses don\'t affect you' },
+  { id: 'noConduit', name: 'No Conduit', costType: 'perRank', costValue: 1, noRanks: true, appliesTo: ['remoteSensing'], description: '(Remote Sensing) Attacks on your remote senses don\'t affect you' },
   { id: 'rapidComm', name: 'Rapid', costType: 'flat', costValue: 1, appliesTo: ['communication'], description: '(Communication) Communicate faster (x10 speed per rank)' },
   { id: 'selectiveComm', name: 'Selective', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['communication'], description: '(Communication) Choose who can hear your broadcast' },
-  { id: 'simultaneousRS', name: 'Simultaneous', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['remoteSensing'], description: '(Remote Sensing) Use remote senses and your own at the same time' },
+  { id: 'simultaneousRS', name: 'Simultaneous', costType: 'perRank', costValue: 1, noRanks: true, appliesTo: ['remoteSensing'], description: '(Remote Sensing) Use remote senses and your own at the same time' },
   // Morph-specific
   { id: 'metamorph', name: 'Metamorph', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['morph'], description: '(Morph) Completely different character sheet per form' },
 ];
@@ -293,7 +293,7 @@ const POWER_FLAWS = [
   { id: 'grabBased', name: 'Grab-Based', costType: 'perRank', costValue: -1, noRanks: true, description: 'Must successfully grab target first' },
   { id: 'increasedAction', name: 'Increased Action', costType: 'perRank', costValue: -1, description: 'Action to use increases by one step (Free\u2192Move\u2192Standard\u2192Full)' },
   { id: 'limited', name: 'Limited', costType: 'perRank', costValue: -1, noRanks: true, description: 'Effect works in roughly half of normal circumstances' },
-  { id: 'permanent', name: 'Permanent', costType: 'perRank', costValue: -1, noRanks: true, description: 'Cannot turn off or adjust (Sustained becomes Permanent)' },
+  { id: 'permanent', name: 'Permanent', costType: 'perRank', costValue: -1, noRanks: true, description: 'Cannot turn off or adjust (Continuous becomes Permanent)' },
   { id: 'reducedRange', name: 'Reduced Range', costType: 'perRank', costValue: -1, description: 'Decrease range by one step per rank (Perception→Ranged→Close)' },
   { id: 'resistible', name: 'Resistible', costType: 'perRank', costValue: -1, noRanks: true, description: 'Additional resistance check to avoid the effect' },
   { id: 'senseDependent', name: 'Sense-Dependent', costType: 'perRank', costValue: -1, noRanks: true, description: 'Target must perceive you/effect via a specific sense type' },
@@ -330,7 +330,7 @@ const POWER_FLAWS = [
   { id: 'quirk', name: 'Quirk', costType: 'flat', costValue: -1, description: 'A minor limitation worth -1 point each (describe)' },
   // ===== SPECIAL FLAWS =====
   { id: 'easilyRemovable', name: 'Easily Removable (-2/5 pts)', costType: 'special', costValue: -2, description: 'Device dropped or taken easily. Reduce total by 2 per 5.' },
-  { id: 'removable', name: 'Removable (-1/5 pts)', costType: 'special', costValue: -1, description: 'Device can be taken with Disarm/Grab. Reduce total by 1 per 5.' },
+  { id: 'removable', name: 'Removable (-1/5 pts)', costType: 'special', costValue: -1, description: 'Device only removable when stunned & defenseless. Reduce total by 1 per 5.' },
 ];
 
 // Immunity options with group/includes relationships
