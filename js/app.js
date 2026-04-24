@@ -346,6 +346,19 @@ function getRangedAttackBonus() {
   return dex + rangedAtk;
 }
 
+function getCombatSkillBonus(skillBaseId, specialtyName) {
+  // Find matching combat skill specialty bonus
+  let best = 0;
+  state.skills.forEach(s => {
+    if (s.baseId === skillBaseId || s.id === skillBaseId) {
+      if (!specialtyName || s.name.toLowerCase().includes(specialtyName.toLowerCase())) {
+        best = Math.max(best, s.ranks);
+      }
+    }
+  });
+  return best;
+}
+
 // ========== PL LIMIT CHECKS ==========
 function getPLLimits() {
   const pl = state.powerLevel;
@@ -414,7 +427,8 @@ function getPLLimits() {
   });
 
   // Unarmed attack + STR damage
-  const unarmedBonus = getCloseAttackBonus();
+  const unarmedSkillBonusPL = getCombatSkillBonus('closeCombat', 'unarmed');
+  const unarmedBonus = getCloseAttackBonus() + unarmedSkillBonusPL;
   const strDmg = getAbilityScore('str') || 0;
   if (strDmg > 0 || unarmedBonus > 0) {
     const unarmedSum = unarmedBonus + strDmg;
@@ -476,7 +490,6 @@ function getPLLimits() {
   }
 
   state.skills.forEach(skill => {
-    if (skill.ranks === 0) return;
     const abilVal = getAbilityScore(skill.ability) || 0;
     const total = skill.ranks + abilVal;
     if (total > skillCap) {
@@ -558,6 +571,23 @@ function renderPLWarnings() {
       `Equipment Over Budget: ${eqSpent} EP spent of ${eqBudget} EP available`
     ));
   }
+
+  // Power Array AE cost validation
+  state.powerArrays.forEach(arr => {
+    const basePower = state.powers.find(p => p.id === arr.basePowerId);
+    if (!basePower) return;
+    const baseCost = calculatePowerCost(basePower);
+    (arr.slots || []).forEach(slot => {
+      const slotPower = state.powers.find(p => p.id === slot.powerId);
+      if (!slotPower) return;
+      const slotCost = calculatePowerCost(slotPower);
+      if (slotCost > baseCost) {
+        container.appendChild(el('div', { className: 'pl-warning' },
+          `Array "${arr.name || 'Power Array'}": AE "${slotPower.name}" costs ${slotCost} PP but base power costs ${baseCost} PP (AE must be ≤ base)`
+        ));
+      }
+    });
+  });
 
 }
 
@@ -2747,7 +2777,8 @@ function renderOffense() {
   ));
 
   // Default unarmed
-  const unarmedBonus = getCloseAttackBonus();
+  const unarmedSkillBonus = getCombatSkillBonus('closeCombat', 'unarmed');
+  const unarmedBonus = getCloseAttackBonus() + unarmedSkillBonus;
   const strScore = getAbilityScore('str');
   const strDmg = strScore != null ? strScore : 0;
   const strAbsent = strScore == null;
@@ -3404,12 +3435,14 @@ function renderSummary() {
   lines.push(`  Initiative: ${signedNum(getInitiative())}`);
   const sumStr = getAbilityScore('str');
   const sumStrVal = sumStr != null ? sumStr : 0;
+  const sumUnarmedSkill = getCombatSkillBonus('closeCombat', 'unarmed');
+  const sumUnarmedBonus = getCloseAttackBonus() + sumUnarmedSkill;
   if (sumStr == null) {
-    lines.push(`  Unarmed: Close, ${signedNum(getCloseAttackBonus())}, No STR — cannot deal damage`);
+    lines.push(`  Unarmed: Close, ${signedNum(sumUnarmedBonus)}, No STR — cannot deal damage`);
   } else {
-    lines.push(`  Unarmed: Close, ${signedNum(getCloseAttackBonus())}, Damage ${sumStrVal} (DC ${15 + sumStrVal})`);
+    lines.push(`  Unarmed: Close, ${signedNum(sumUnarmedBonus)}, Damage ${sumStrVal} (DC ${15 + sumStrVal})`);
   }
-  lines.push(`  Grab: Close, ${signedNum(getCloseAttackBonus())}, Grab vs. STR/Dodge (STR ${sumStr == null ? '—' : sumStrVal})`);
+  lines.push(`  Grab: Close, ${signedNum(sumUnarmedBonus)}, Grab vs. STR/Dodge (STR ${sumStr == null ? '—' : sumStrVal})`);
   const tmRks = state.advantages.throwMastery ? state.advantages.throwMastery.ranks : 0;
   const throwDam = sumStrVal + tmRks;
   lines.push(`  Throw: Ranged, ${signedNum(getRangedAttackBonus())}, Damage ${throwDam} (DC ${15 + throwDam})`);
