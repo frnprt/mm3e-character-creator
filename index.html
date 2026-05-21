@@ -19,6 +19,7 @@
           <span class="pp-value" id="pp-spent">0</span>
           <span class="pp-separator">/</span>
           <span class="pp-value" id="pp-total">150</span>
+          <span class="pp-earned" id="pp-earned" style="display:none"></span>
         </div>
         <div class="pp-remaining" id="pp-remaining-bar">
           <div class="pp-bar" id="pp-bar"></div>
@@ -392,6 +393,19 @@
         <div class="inplay-section">
           <h3>Session Notes</h3>
           <textarea id="inplay-notes" rows="4" placeholder="Track events, reminders, turn-by-turn notes..."></textarea>
+        </div>
+
+        <!-- Earned PP Tracker -->
+        <div class="inplay-section">
+          <h3>Earned Power Points</h3>
+          <p class="panel-note">Track PP earned during gameplay sessions. These add to your total PP budget.</p>
+          <div class="inplay-earned-pp-summary" id="inplay-earned-pp-summary"></div>
+          <div class="inplay-earned-pp-add">
+            <input type="number" id="inplay-pp-amount" min="1" value="1" class="inplay-pp-amount-input">
+            <input type="text" id="inplay-pp-note" placeholder="Session note (e.g. Session 5, defeated villain)">
+            <button class="btn-add" id="btn-add-earned-pp">+ Award PP</button>
+          </div>
+          <div class="inplay-pp-log" id="inplay-pp-log"></div>
         </div>
 
         <!-- Reset button -->

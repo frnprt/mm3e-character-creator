@@ -196,6 +196,13 @@ body {
   margin-top: 2px;
 }
 
+.pp-earned {
+  font-size: 0.7rem;
+  color: var(--success, #4caf50);
+  margin-left: 0.4rem;
+  font-weight: 500;
+}
+
 /* PL Warnings */
 .pl-warnings {
   background: transparent;
@@ -2843,6 +2850,66 @@ footer {
   font-family: inherit;
   font-size: 0.9rem;
   resize: vertical;
+}
+
+/* Earned PP Tracker */
+.inplay-earned-pp-summary {
+  margin-bottom: 0.75rem;
+}
+.earned-pp-total {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.earned-pp-label {
+  color: var(--text-dim);
+}
+.earned-pp-sep {
+  margin-left: 0.5rem;
+}
+.inplay-earned-pp-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.inplay-pp-amount-input {
+  width: 4rem;
+  text-align: center;
+}
+.inplay-earned-pp-add input[type="text"] {
+  flex: 1;
+}
+.inplay-pp-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.pp-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+.pp-log-amount {
+  font-weight: 600;
+  color: var(--success, #4caf50);
+  min-width: 3.5rem;
+}
+.pp-log-note {
+  flex: 1;
+  color: var(--text);
+}
+.pp-log-date {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  min-width: 5rem;
+  text-align: right;
 }
 
 /* ===== Equipment Tab ===== */

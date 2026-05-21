@@ -26,6 +26,8 @@ const state = {
   allowNegativeSkills: false,
   minions: [],         // [{ id, name, sourceType, sourceId, ppBudget, abilities, defenses, skills, advantages, powers, attacks, notes }]
   inPlay: { heroPoints: 1, toughnessPenalty: 0, conditions: [], exhaustion: 0, activeEffects: [], notes: '' },
+  earnedPP: 0,
+  ppLog: [],  // [{ date, amount, note }]
   nextPowerId: 1,
   nextAttackId: 1,
   nextArrayId: 1,
@@ -259,7 +261,7 @@ function getDefensesCost() {
 }
 
 function getTotalPP() {
-  return state.powerLevel * state.ppPerPL;
+  return state.powerLevel * state.ppPerPL + (state.earnedPP || 0);
 }
 
 function getSpentPP() {
@@ -515,6 +517,12 @@ function renderPPTracker() {
 
   $('#pp-spent').textContent = spent;
   $('#pp-total').textContent = total;
+  const earned = state.earnedPP || 0;
+  const ppEarnedEl = $('#pp-earned');
+  if (ppEarnedEl) {
+    ppEarnedEl.textContent = earned > 0 ? `(+${earned} earned)` : '';
+    ppEarnedEl.style.display = earned > 0 ? '' : 'none';
+  }
   $('#pp-remaining-text').textContent = remaining >= 0 ? `${remaining} remaining` : `${Math.abs(remaining)} over budget!`;
 
   const pct = Math.min(100, Math.max(0, (spent / total) * 100));
@@ -3152,6 +3160,54 @@ function renderInPlay() {
   if (notesEl && document.activeElement !== notesEl) {
     notesEl.value = ip.notes || '';
   }
+
+  // Earned PP tracker
+  renderEarnedPP();
+}
+
+function renderEarnedPP() {
+  const summary = $('#inplay-earned-pp-summary');
+  if (summary) {
+    const basePP = state.powerLevel * state.ppPerPL;
+    const earned = state.earnedPP || 0;
+    summary.innerHTML = '';
+    summary.appendChild(el('div', { className: 'earned-pp-total' },
+      el('span', { className: 'earned-pp-label' }, 'Base PP: '),
+      el('span', null, String(basePP)),
+      el('span', { className: 'earned-pp-label earned-pp-sep' }, ' + Earned: '),
+      el('strong', null, String(earned)),
+      el('span', { className: 'earned-pp-label earned-pp-sep' }, ' = Total: '),
+      el('strong', null, String(basePP + earned)),
+    ));
+  }
+
+  const logContainer = $('#inplay-pp-log');
+  if (logContainer) {
+    logContainer.innerHTML = '';
+    const log = state.ppLog || [];
+    if (log.length === 0) {
+      logContainer.appendChild(el('div', { className: 'panel-note' }, 'No PP earned yet.'));
+    } else {
+      // Show in reverse chronological order
+      [...log].reverse().forEach((entry, revIdx) => {
+        const idx = log.length - 1 - revIdx;
+        const row = el('div', { className: 'pp-log-entry' },
+          el('span', { className: 'pp-log-amount' }, `+${entry.amount} PP`),
+          el('span', { className: 'pp-log-note' }, entry.note || ''),
+          el('span', { className: 'pp-log-date' }, entry.date || ''),
+          el('button', { className: 'btn-remove', title: 'Remove', onClick: () => {
+            if (!confirm(`Remove +${entry.amount} PP entry?`)) return;
+            state.earnedPP = Math.max(0, (state.earnedPP || 0) - entry.amount);
+            state.ppLog.splice(idx, 1);
+            renderEarnedPP();
+            renderPPTracker();
+            autoSaveRoster();
+          } }, '×'),
+        );
+        logContainer.appendChild(row);
+      });
+    }
+  }
 }
 
 function setupInPlay() {
@@ -3193,6 +3249,29 @@ function setupInPlay() {
       autoSaveRoster();
     });
   }
+
+  // Earned PP
+  const addPPBtn = $('#btn-add-earned-pp');
+  if (addPPBtn) {
+    addPPBtn.addEventListener('click', () => {
+      const amountInput = $('#inplay-pp-amount');
+      const noteInput = $('#inplay-pp-note');
+      const amount = parseInt(amountInput.value, 10);
+      if (!amount || amount < 1) return;
+      if (!state.ppLog) state.ppLog = [];
+      state.earnedPP = (state.earnedPP || 0) + amount;
+      state.ppLog.push({
+        date: new Date().toLocaleDateString(),
+        amount: amount,
+        note: noteInput.value.trim(),
+      });
+      amountInput.value = '1';
+      noteInput.value = '';
+      renderEarnedPP();
+      renderPPTracker();
+      autoSaveRoster();
+    });
+  }
 }
 
 // -- Summary Tab --
@@ -3206,7 +3285,8 @@ function renderSummary() {
   if (state.identity) lines.push(`  Identity: ${state.identity}`);
   const infoLine = [state.gender, state.age ? `Age ${state.age}` : '', state.height, state.weight].filter(Boolean).join('  |  ');
   if (infoLine) lines.push(`  ${infoLine}`);
-  lines.push(`  Power Level: ${state.powerLevel}  |  Power Points: ${getSpentPP()} / ${getTotalPP()}`);
+  const earnedPPSummary = (state.earnedPP || 0) > 0 ? ` (${state.powerLevel * state.ppPerPL} base + ${state.earnedPP} earned)` : '';
+  lines.push(`  Power Level: ${state.powerLevel}  |  Power Points: ${getSpentPP()} / ${getTotalPP()}${earnedPPSummary}`);
   lines.push(divider);
 
   if (state.appearance) {
@@ -3717,6 +3797,7 @@ function getDefaultState() {
     attacks: [], complications: [{ type: 'Motivation', description: '' }, { type: 'Identity', description: '' }],
     allowNegativeSkills: false,
     minions: [], inPlay: { heroPoints: 1, toughnessPenalty: 0, conditions: [], exhaustion: 0, activeEffects: [], notes: '' },
+    earnedPP: 0, ppLog: [],
     nextPowerId: 1, nextAttackId: 1, nextArrayId: 1, nextMinionId: 1, nextEquipId: 1,
   };
   ABILITIES.forEach(a => { s.abilities[a.id] = 0; s.abilitiesAbsent[a.id] = false; });
