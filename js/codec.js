@@ -12,8 +12,8 @@ async function encodeShareString(scope, data) {
   const bytes = new TextEncoder().encode(json);
   const cs = new CompressionStream('deflate-raw');
   const writer = cs.writable.getWriter();
-  writer.write(bytes);
-  writer.close();
+  await writer.write(bytes);
+  await writer.close();
   const compressed = await new Response(cs.readable).arrayBuffer();
   const b64 = uint8ToBase64url(new Uint8Array(compressed));
   return scope + b64;
@@ -32,8 +32,8 @@ async function decodeShareString(str) {
   const compressed = base64urlToUint8(b64);
   const ds = new DecompressionStream('deflate-raw');
   const writer = ds.writable.getWriter();
-  writer.write(compressed);
-  writer.close();
+  await writer.write(compressed);
+  await writer.close();
   const decompressed = await new Response(ds.readable).arrayBuffer();
   const json = new TextDecoder().decode(decompressed);
   return { scope, data: JSON.parse(json) };
