@@ -4126,6 +4126,65 @@ function setupShareExport() {
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 }
 
+// ========== SHARE CODE IMPORT ==========
+function setupShareImport() {
+  const modal = $('#share-import-modal');
+  const textarea = $('#share-import-text');
+  const status = $('#share-import-status');
+
+  $('#btn-import-code').addEventListener('click', () => {
+    textarea.value = '';
+    status.textContent = '';
+    status.className = 'share-status';
+    modal.style.display = 'flex';
+    textarea.focus();
+  });
+
+  $('#share-import-go').addEventListener('click', async () => {
+    const code = textarea.value.trim();
+    if (!code) {
+      status.textContent = 'Please paste a share code.';
+      status.className = 'share-status error';
+      return;
+    }
+    try {
+      const { scope, data } = await decodeShareString(code);
+      if (scope === 'c') {
+        // Import single character into roster
+        saveCurrentToRoster();
+        const id = generateRosterId();
+        roster.characters[id] = data;
+        roster.activeId = id;
+        loadStateFromData(data);
+        renderCharacterBar();
+        autoSaveRoster();
+        modal.style.display = 'none';
+        status.textContent = '';
+      } else {
+        // Roster import — confirm first
+        const count = Object.keys(data.characters || {}).length;
+        if (!confirm(`Replace your entire roster with ${count} character(s)? This cannot be undone.`)) return;
+        roster.characters = data.characters || {};
+        roster.activeId = data.activeId || Object.keys(roster.characters)[0];
+        nextRosterId = data.nextRosterId || Object.keys(roster.characters).length + 1;
+        loadStateFromData(roster.characters[roster.activeId]);
+        renderCharacterBar();
+        autoSaveRoster();
+        modal.style.display = 'none';
+        status.textContent = '';
+      }
+    } catch (e) {
+      status.textContent = 'Invalid code. Please check you copied the full string.';
+      status.className = 'share-status error';
+    }
+  });
+
+  const closeModal = () => { modal.style.display = 'none'; };
+  $('#share-import-close').addEventListener('click', closeModal);
+  $('#share-import-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+}
+
 // ========== INITIALIZATION ==========
 function init() {
   setupNavigation();
@@ -4140,6 +4199,7 @@ function init() {
   setupInPlay();
   setupSaveLoad();
   setupShareExport();
+  setupShareImport();
   setupCharacterBar();
 
   if (!autoLoadRoster()) {

@@ -128,6 +128,7 @@
           <button class="btn-secondary" id="btn-load">Load Character</button>
           <button class="btn-secondary" id="btn-export-text">Export as Text</button>
           <button class="btn-secondary" id="btn-share-code">Share as Code</button>
+          <button class="btn-secondary" id="btn-import-code">Import Code</button>
           <button class="btn-danger" id="btn-clear">Reset Character</button>
         </div>
         <input type="file" id="file-input" accept=".json" style="display:none">
@@ -545,6 +546,27 @@
         <div class="modal-footer">
           <button class="btn-secondary" id="share-export-cancel">Close</button>
           <button class="btn-primary" id="share-export-copy">Copy to Clipboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Code Import modal -->
+    <div class="modal-overlay" id="share-import-modal" style="display:none">
+      <div class="modal modal-small">
+        <div class="modal-header">
+          <h3>Import Code</h3>
+          <button class="modal-close" id="share-import-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="share-import-text">Paste share code below:</label>
+            <textarea id="share-import-text" class="share-code-textarea" placeholder="Paste code here..."></textarea>
+          </div>
+          <div id="share-import-status" class="share-status"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="share-import-cancel">Cancel</button>
+          <button class="btn-primary" id="share-import-go">Import</button>
         </div>
       </div>
     </div>
