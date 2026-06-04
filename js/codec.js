@@ -12,10 +12,20 @@ async function encodeShareString(scope, data) {
   const bytes = new TextEncoder().encode(json);
   const cs = new CompressionStream('deflate-raw');
   const writer = cs.writable.getWriter();
-  await writer.write(bytes);
-  await writer.close();
-  const compressed = await new Response(cs.readable).arrayBuffer();
-  const b64 = uint8ToBase64url(new Uint8Array(compressed));
+  writer.write(bytes);
+  writer.close();
+  const chunks = [];
+  const reader = cs.readable.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+  const compressed = new Uint8Array(totalLen);
+  let off = 0;
+  for (const chunk of chunks) { compressed.set(chunk, off); off += chunk.length; }
+  const b64 = uint8ToBase64url(compressed);
   return scope + b64;
 }
 
@@ -32,9 +42,19 @@ async function decodeShareString(str) {
   const compressed = base64urlToUint8(b64);
   const ds = new DecompressionStream('deflate-raw');
   const writer = ds.writable.getWriter();
-  await writer.write(compressed);
-  await writer.close();
-  const decompressed = await new Response(ds.readable).arrayBuffer();
+  writer.write(compressed);
+  writer.close();
+  const chunks = [];
+  const reader = ds.readable.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+  const decompressed = new Uint8Array(totalLen);
+  let off = 0;
+  for (const chunk of chunks) { decompressed.set(chunk, off); off += chunk.length; }
   const json = new TextDecoder().decode(decompressed);
   return { scope, data: JSON.parse(json) };
 }
