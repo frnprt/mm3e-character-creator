@@ -4076,15 +4076,14 @@ function setupShareExport() {
     generateCode();
   }
 
-  async function generateCode() {
+  function generateCode() {
     status.textContent = '';
     status.className = 'share-status';
-    textarea.value = 'Generating...';
     try {
       const data = shareScope === 'c'
         ? getStateForSave()
         : { activeId: roster.activeId, characters: roster.characters, nextRosterId };
-      const code = await encodeShareString(shareScope, data);
+      const code = encodeShareString(shareScope, data);
       textarea.value = code;
     } catch (e) {
       textarea.value = '';
@@ -4125,21 +4124,25 @@ function setupShareExport() {
   $('#share-export-cancel').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-  $('#btn-share-url').addEventListener('click', async () => {
+  $('#btn-share-url').addEventListener('click', () => {
     try {
       const data = getStateForSave();
-      const code = await encodeShareString('c', data);
+      const code = encodeShareString('c', data);
       const url = window.location.origin + window.location.pathname + '#mm3e=' + code;
-      await navigator.clipboard.writeText(url);
-      const btn = $('#btn-share-url');
-      const original = btn.textContent;
-      btn.textContent = 'URL Copied!';
-      setTimeout(() => btn.textContent = original, 2000);
-      if (url.length > 2000) {
-        alert('Note: This URL is ' + url.length + ' characters long and may be truncated by some apps (Slack, Discord, etc.). Use "Share as Code" for reliable sharing.');
-      }
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = $('#btn-share-url');
+        const original = btn.textContent;
+        btn.textContent = 'URL Copied!';
+        setTimeout(() => btn.textContent = original, 2000);
+        if (url.length > 2000) {
+          alert('Note: This URL is ' + url.length + ' characters long and may be truncated by some apps (Slack, Discord, etc.). Use "Share as Code" for reliable sharing.');
+        }
+      }).catch(() => {
+        // Fallback: show the URL in a prompt for manual copy
+        prompt('Copy this URL:', url);
+      });
     } catch (e) {
-      alert('Could not copy URL to clipboard.');
+      alert('Could not generate share URL.');
     }
   });
 }
@@ -4158,7 +4161,7 @@ function setupShareImport() {
     textarea.focus();
   });
 
-  $('#share-import-go').addEventListener('click', async () => {
+  $('#share-import-go').addEventListener('click', () => {
     const code = textarea.value.trim();
     if (!code) {
       status.textContent = 'Please paste a share code.';
@@ -4166,7 +4169,7 @@ function setupShareImport() {
       return;
     }
     try {
-      const { scope, data } = await decodeShareString(code);
+      const { scope, data } = decodeShareString(code);
       if (scope === 'c') {
         // Import single character into roster
         saveCurrentToRoster();
@@ -4204,12 +4207,12 @@ function setupShareImport() {
 }
 
 // ========== HASH IMPORT ==========
-async function checkHashImport() {
+function checkHashImport() {
   const hash = window.location.hash;
   if (!hash.startsWith('#mm3e=')) return;
   const code = hash.slice(6); // remove '#mm3e='
   try {
-    const { scope, data } = await decodeShareString(code);
+    const { scope, data } = decodeShareString(code);
     if (scope === 'c') {
       const name = data.name || 'Unnamed Character';
       if (!confirm(`Import character "${name}"?`)) {
