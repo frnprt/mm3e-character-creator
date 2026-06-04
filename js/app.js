@@ -4060,6 +4060,72 @@ function setupCharacterBar() {
   $('#btn-char-del').addEventListener('click', deleteCharacter);
 }
 
+// ========== SHARE CODE EXPORT ==========
+function setupShareExport() {
+  let shareScope = 'c';
+  const modal = $('#share-export-modal');
+  const textarea = $('#share-export-text');
+  const status = $('#share-export-status');
+  const btnChar = $('#share-scope-char');
+  const btnRoster = $('#share-scope-roster');
+
+  function setScope(scope) {
+    shareScope = scope;
+    btnChar.classList.toggle('active', scope === 'c');
+    btnRoster.classList.toggle('active', scope === 'r');
+    generateCode();
+  }
+
+  async function generateCode() {
+    status.textContent = '';
+    status.className = 'share-status';
+    textarea.value = 'Generating...';
+    try {
+      const data = shareScope === 'c'
+        ? getStateForSave()
+        : { activeId: roster.activeId, characters: roster.characters, nextRosterId };
+      const code = await encodeShareString(shareScope, data);
+      textarea.value = code;
+    } catch (e) {
+      textarea.value = '';
+      status.textContent = 'Error generating code.';
+      status.className = 'share-status error';
+    }
+  }
+
+  $('#btn-share-code').addEventListener('click', () => {
+    shareScope = 'c';
+    btnChar.classList.add('active');
+    btnRoster.classList.remove('active');
+    modal.style.display = 'flex';
+    generateCode();
+  });
+
+  btnChar.addEventListener('click', () => setScope('c'));
+  btnRoster.addEventListener('click', () => setScope('r'));
+
+  $('#share-export-copy').addEventListener('click', () => {
+    const text = textarea.value;
+    if (!text || text === 'Generating...') return;
+    navigator.clipboard.writeText(text).then(() => {
+      status.textContent = 'Copied to clipboard!';
+      status.className = 'share-status success';
+    }).catch(() => {
+      textarea.select();
+      document.execCommand('copy');
+      status.textContent = 'Copied to clipboard!';
+      status.className = 'share-status success';
+    });
+  });
+
+  textarea.addEventListener('focus', () => textarea.select());
+
+  const closeModal = () => { modal.style.display = 'none'; };
+  $('#share-export-close').addEventListener('click', closeModal);
+  $('#share-export-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+}
+
 // ========== INITIALIZATION ==========
 function init() {
   setupNavigation();
@@ -4073,6 +4139,7 @@ function init() {
   setupEquipment();
   setupInPlay();
   setupSaveLoad();
+  setupShareExport();
   setupCharacterBar();
 
   if (!autoLoadRoster()) {
