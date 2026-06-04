@@ -1907,6 +1907,13 @@ footer {
 .share-status.success { color: var(--accent); }
 .share-status.error { color: var(--danger, #e74c3c); }
 
+#share-scope-char.active,
+#share-scope-roster.active {
+  background: var(--accent);
+  color: var(--bg-dark);
+  border-color: var(--accent);
+}
+
 /* ==================== RESPONSIVE ==================== */
 
 /* --- Tablet (max-width: 1024px) --- */
