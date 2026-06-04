@@ -4124,6 +4124,24 @@ function setupShareExport() {
   $('#share-export-close').addEventListener('click', closeModal);
   $('#share-export-cancel').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  $('#btn-share-url').addEventListener('click', async () => {
+    try {
+      const data = getStateForSave();
+      const code = await encodeShareString('c', data);
+      const url = window.location.origin + window.location.pathname + '#mm3e=' + code;
+      await navigator.clipboard.writeText(url);
+      const btn = $('#btn-share-url');
+      const original = btn.textContent;
+      btn.textContent = 'URL Copied!';
+      setTimeout(() => btn.textContent = original, 2000);
+      if (url.length > 2000) {
+        alert('Note: This URL is ' + url.length + ' characters long and may be truncated by some apps (Slack, Discord, etc.). Use "Share as Code" for reliable sharing.');
+      }
+    } catch (e) {
+      alert('Could not copy URL to clipboard.');
+    }
+  });
 }
 
 // ========== SHARE CODE IMPORT ==========
@@ -4185,6 +4203,45 @@ function setupShareImport() {
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 }
 
+// ========== HASH IMPORT ==========
+async function checkHashImport() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#mm3e=')) return;
+  const code = hash.slice(6); // remove '#mm3e='
+  try {
+    const { scope, data } = await decodeShareString(code);
+    if (scope === 'c') {
+      const name = data.name || 'Unnamed Character';
+      if (!confirm(`Import character "${name}"?`)) {
+        history.replaceState(null, '', window.location.pathname);
+        return;
+      }
+      saveCurrentToRoster();
+      const id = generateRosterId();
+      roster.characters[id] = data;
+      roster.activeId = id;
+      loadStateFromData(data);
+      renderCharacterBar();
+      autoSaveRoster();
+    } else {
+      const count = Object.keys(data.characters || {}).length;
+      if (!confirm(`Import roster with ${count} character(s)? This will replace your current roster.`)) {
+        history.replaceState(null, '', window.location.pathname);
+        return;
+      }
+      roster.characters = data.characters || {};
+      roster.activeId = data.activeId || Object.keys(roster.characters)[0];
+      nextRosterId = data.nextRosterId || Object.keys(roster.characters).length + 1;
+      loadStateFromData(roster.characters[roster.activeId]);
+      renderCharacterBar();
+      autoSaveRoster();
+    }
+  } catch (e) {
+    alert('Could not read the shared character from the URL. The link may be incomplete.');
+  }
+  history.replaceState(null, '', window.location.pathname);
+}
+
 // ========== INITIALIZATION ==========
 function init() {
   setupNavigation();
@@ -4210,6 +4267,8 @@ function init() {
     loadStateFromData(roster.characters[id]);
     renderCharacterBar();
   }
+
+  checkHashImport();
 }
 
 document.addEventListener('DOMContentLoaded', init);
