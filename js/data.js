@@ -267,7 +267,7 @@ const POWER_EXTRAS = [
   { id: 'variableDescriptor2', name: 'Variable Descriptor (broad)', costType: 'flat', costValue: 2, noRanks: true, description: 'Change power descriptor within a broad group' },
   { id: 'variableDescriptor1', name: 'Variable Descriptor (narrow)', costType: 'flat', costValue: 1, noRanks: true, description: 'Change power descriptor within a narrow group' },
   // Teleport-specific
-  { id: 'accurateTeleport', name: 'Accurate', costType: 'perRank', costValue: 1, noRanks: true, appliesTo: ['teleport'], description: '(Teleport) Teleport to any place you can accurately determine without perceiving (+1/rank)' },
+  { id: 'accurateTeleport', name: 'Accurate', costType: 'perRank', costValue: 1, appliesTo: ['teleport'], description: '(Teleport) Teleport to any place you can accurately determine without perceiving (+1/rank)' },
   { id: 'changeDirection', name: 'Change Direction', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['teleport'], description: '(Teleport) Choose facing after teleporting' },
   { id: 'changeVelocity', name: 'Change Velocity', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['teleport'], description: '(Teleport) Arrive at any speed from 0 to your max' },
   { id: 'easy', name: 'Easy', costType: 'flat', costValue: 1, noRanks: true, appliesTo: ['teleport'], description: '(Teleport) Teleport as a free action instead of move' },
