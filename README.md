@@ -7,17 +7,17 @@ A web-based character creator for **Mutants & Masterminds Third Edition**, built
 ## Features ✨
 
 ### Character Building 🛠️
-- **Abilities** — All 8 abilities with absent ability support (STR, STA, AGL, DEX, FGT, INT, AWE, PRE)
-- **Skills** — 16 base skills plus specialty sub-skills for Close Combat, Ranged Combat, Expertise, etc.
-- **Advantages** — 77 advantages across Combat, Fortune, and General categories with ranked/specialty support
-- **Powers** — 46 power effects with full extras/flaws system, variable cost support, and power arrays (alternate effects, dynamic slots)
-- **Equipment** — ~100 SRD equipment items across weapons, armor, vehicles, general gear, and headquarters; plus a custom equipment builder with full effect/modifier support
+- **Abilities** — Full ability support, including absent abilities (STR, STA, AGL, DEX, FGT, INT, AWE, PRE)
+- **Skills** — Core skills plus specialty sub-skills for Close Combat, Ranged Combat, Expertise, and more
+- **Advantages** — Advantages across Combat, Fortune, and General categories with ranked/specialty support
+- **Powers** — Broad power effect support with full extras/flaws system, variable cost support, and power arrays (alternate effects, dynamic slots)
+- **Equipment** — SRD equipment across weapons, armor, vehicles, general gear, and headquarters; plus a custom equipment builder with full effect/modifier support
 - **Defenses** — Automatic calculation from abilities, purchased ranks, equipment bonuses, Protection powers, and Defensive Roll
 - **Minions & Sidekicks** — Full nested character sheets for Minion/Sidekick advantages and Summon powers
 
 ### In-Play Tracker 🎮
 - Quick-reference defense stats bar with live Toughness penalty
-- Condition toggle grid with descriptions (28 conditions)
+- Condition toggle grid with descriptions
 - Exhaustion track, Hero Point counter, Toughness penalty tracker
 - Defensive Roll automatically removed from Toughness when Vulnerable/Defenseless
 - Active effects list and session notes
@@ -26,7 +26,7 @@ A web-based character creator for **Mutants & Masterminds Third Edition**, built
 - Real-time Power Level limit checks (Attack+Effect, Dodge+Toughness, Parry+Toughness, Fort+Will, skill caps)
 - PP budget tracking with over-budget warnings
 - Equipment Point budget tracking
-- Complication count warnings (minimum 2 recommended)
+- Complication count warnings (multiple complications recommended)
 
 ### Quality of Life 🌟
 - Multi-character roster with create, duplicate, and delete
